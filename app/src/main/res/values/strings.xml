@@ -42,4 +42,8 @@
     <string name="lhdc_params">Set default LHDC params</string>
     <string name="lc3plus_params">Set default LC3plus HR params</string>
     <string name="select_frame_ms">Select Frame Size:</string>
+    <string name="restart_audioserver">Restart audioserver</string>
+    <string name="restart_audioserver_dialog">Are you sure to restart audioserver?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>

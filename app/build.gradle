@@ -10,8 +10,8 @@ android {
         applicationId "ru.kirddos.exta2dp"
         minSdk 33
         targetSdk 34
-        versionCode 225
-        versionName "2.2.5"
+        versionCode 226
+        versionName "2.2.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -43,7 +43,7 @@ android {
         }
     }
 
-    ndkVersion '26.0.10792818'
+    ndkVersion '26.1.10909125'
     externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
@@ -52,16 +52,15 @@ android {
     }
 }
 
+
+
 dependencies {
+    implementation 'com.github.topjohnwu.libsu:core:5.2.2'
     implementation 'org.lsposed.hiddenapibypass:hiddenapibypass:4.3'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'com.google.android.material:material:1.10.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     compileOnly files('libs/api-release.aar')
     implementation files('libs/service-release.aar')
     implementation files('libs/interface-release.aar')
     //implementation files('libs/helper-release.aar')
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }

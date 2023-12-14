@@ -36,6 +36,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
@@ -44,6 +45,8 @@ import org.lsposed.hiddenapibypass.HiddenApiBypass;
 import io.github.libxposed.service.XposedService;
 import io.github.libxposed.service.XposedServiceHelper;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.topjohnwu.superuser.Shell;
 public class ExtA2DPActivity extends Activity {
 
     enum State {
@@ -334,17 +337,26 @@ public class ExtA2DPActivity extends Activity {
         TextView quality = findViewById(R.id.quality);
         TextView name = findViewById(R.id.name);
         TextView mac = findViewById(R.id.mac);
-        codec.setText(resolveCodecName(current, true));
-        quality.setText(resolveCodecQuality(current));
+        try {
+            codec.setText(resolveCodecName(current, true));
+            quality.setText(resolveCodecQuality(current));
+        } catch (NullPointerException e) {
+            Log.w(TAG, "setMainText: " , e);
+        }
 
         if (device == null) {
             return;
         }
 
-        mac.setText(device.getAddress());
+        try {
+            mac.setText(device.getAddress());
+        } catch (NullPointerException e) {
+            Log.w(TAG, "setMainText: " , e);
+        }
+
         try {
             name.setText(device.getName());
-        } catch (SecurityException e) {
+        } catch (SecurityException | NullPointerException e) {
             Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
         }
     }
@@ -367,10 +379,28 @@ public class ExtA2DPActivity extends Activity {
                 addBitrateChips();
             }
         } else if (tab.isSettings()) {
-            TextView companion = findViewById(R.id.generate_module);
-            companion.setOnClickListener(v -> {
+            /*MaterialCardView companion = findViewById(R.id.module_card);
+            /*companion.setOnClickListener(v -> {
                 Toast.makeText(this, "Clicked " + v, Toast.LENGTH_SHORT).show();
                 savePrefs();
+            })*/
+            MaterialCardView restart = findViewById(R.id.restart_card);
+            restart.setOnClickListener(v -> {
+                new MaterialAlertDialogBuilder(this).setTitle(getString(R.string.restart_audioserver) + "?")
+                        .setMessage(getString(R.string.restart_audioserver_dialog))
+                        .setNegativeButton(getString(R.string.yes), (dialog, which) -> {
+                            Shell.Result result = Shell.cmd("setprop ctl.restart audioserver").exec();
+                            if (result.getCode() != 0) {
+                                Toast.makeText(this, "Restarting audioserver failed, see logcat", Toast.LENGTH_SHORT).show();
+                                Log.e(TAG, "Code: " + result.getCode());
+                                Log.e(TAG, "Out: " + result.getOut());
+                                Log.e(TAG, "Err: " + result.getErr());
+                            } else {
+                                Toast.makeText(this, "Restarting audioserver... ", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setPositiveButton(getString(R.string.no), (dialog, which) -> {})
+                        .show();
             });
         }
     }
@@ -755,6 +785,8 @@ public class ExtA2DPActivity extends Activity {
         registerReceiver(bluetoothA2dpReceiver, filter);
 
         XposedServiceHelper.registerListener(xposedListener);
+
+        Shell.getShell(shell -> {});
 
         BluetoothManager bluetoothManager = getSystemService(BluetoothManager.class);
         adapter = bluetoothManager.getAdapter();
