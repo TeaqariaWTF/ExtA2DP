@@ -207,7 +207,10 @@ public class BluetoothAppModule extends XposedModule {
                                     oldConfig.getSampleRate() != newConfig.getSampleRate() ||
                                     oldConfig.getChannelMode() != newConfig.getChannelMode() ||
                                     oldConfig.getBitsPerSample() != newConfig.getBitsPerSample() ||
-                                    (type == SOURCE_CODEC_TYPE_LHDCV3 && oldConfig.getCodecSpecific3() != newConfig.getCodecSpecific3());
+                                    (type == SOURCE_CODEC_TYPE_LHDCV3 && oldConfig.getCodecSpecific3() != newConfig.getCodecSpecific3()) ||
+                                    (type == SOURCE_CODEC_TYPE_LC3PLUS_HR && oldConfig.getCodecSpecific2() != newConfig.getCodecSpecific2());
+
+                            log(TAG + " processCodecConfigEvent: old rate: " + oldConfig.getSampleRate() + ", new rate: " + newConfig.getSampleRate());
 
                             broadcast = oldConfig.getCodecType() == type && oldConfig.getCodecSpecific1() != newConfig.getCodecSpecific1();
                         }
@@ -286,8 +289,8 @@ public class BluetoothAppModule extends XposedModule {
                     res[pos++] = newBluetoothCodecConfig.newInstance(SOURCE_CODEC_TYPE_LHDCV2, basePriority + 1, BluetoothCodecConfig.SAMPLE_RATE_NONE, BluetoothCodecConfig.BITS_PER_SAMPLE_NONE, BluetoothCodecConfig.CHANNEL_MODE_NONE, 0 /* codecSpecific1 */, 0 /* codecSpecific2 */, 0 /* codecSpecific3 */, 0 /* codecSpecific4 */);
                     res[pos++] = newBluetoothCodecConfig.newInstance(SOURCE_CODEC_TYPE_LHDCV3, basePriority + 2, BluetoothCodecConfig.SAMPLE_RATE_NONE, BluetoothCodecConfig.BITS_PER_SAMPLE_NONE, BluetoothCodecConfig.CHANNEL_MODE_NONE, 0 /* codecSpecific1 */, 0 /* codecSpecific2 */, 0 /* codecSpecific3 */, 0 /* codecSpecific4 */);
                     res[pos++] = newBluetoothCodecConfig.newInstance(SOURCE_CODEC_TYPE_LHDCV5, basePriority + 3, BluetoothCodecConfig.SAMPLE_RATE_NONE, BluetoothCodecConfig.BITS_PER_SAMPLE_NONE, BluetoothCodecConfig.CHANNEL_MODE_NONE, 0 /* codecSpecific1 */, 0 /* codecSpecific2 */, 0 /* codecSpecific3 */, 0 /* codecSpecific4 */);
-                    res[pos++] = newBluetoothCodecConfig.newInstance(SOURCE_CODEC_TYPE_LC3PLUS_HR, basePriority + 4 /* -1 */, BluetoothCodecConfig.SAMPLE_RATE_NONE, BluetoothCodecConfig.BITS_PER_SAMPLE_NONE, BluetoothCodecConfig.CHANNEL_MODE_NONE, 0 /* codecSpecific1 */, 0 /* codecSpecific2 */, 0 /* codecSpecific3 */, 0 /* codecSpecific4 */);
-                    res[pos++] = newBluetoothCodecConfig.newInstance(SOURCE_CODEC_TYPE_FLAC, basePriority + 5, BluetoothCodecConfig.SAMPLE_RATE_NONE, BluetoothCodecConfig.BITS_PER_SAMPLE_NONE, BluetoothCodecConfig.CHANNEL_MODE_NONE, 0 /* codecSpecific1 */, 0 /* codecSpecific2 */, 0 /* codecSpecific3 */, 0 /* codecSpecific4 */);
+                    res[pos++] = newBluetoothCodecConfig.newInstance(SOURCE_CODEC_TYPE_FLAC, basePriority + 4, BluetoothCodecConfig.SAMPLE_RATE_NONE, BluetoothCodecConfig.BITS_PER_SAMPLE_NONE, BluetoothCodecConfig.CHANNEL_MODE_NONE, 0 /* codecSpecific1 */, 0 /* codecSpecific2 */, 0 /* codecSpecific3 */, 0 /* codecSpecific4 */);
+                    res[pos++] = newBluetoothCodecConfig.newInstance(SOURCE_CODEC_TYPE_LC3PLUS_HR, basePriority + 5, BluetoothCodecConfig.SAMPLE_RATE_NONE, BluetoothCodecConfig.BITS_PER_SAMPLE_NONE, BluetoothCodecConfig.CHANNEL_MODE_NONE, 0 /* codecSpecific1 */, 0 /* codecSpecific2 */, 0 /* codecSpecific3 */, 0 /* codecSpecific4 */);
 
                     log(TAG + " assignCodecConfigPriorities: " + Arrays.toString(res));
 

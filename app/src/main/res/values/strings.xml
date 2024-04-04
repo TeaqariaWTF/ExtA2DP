@@ -46,4 +46,7 @@
     <string name="restart_audioserver_dialog">Are you sure to restart audioserver?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="kbps">kbps</string>
+    <string name="device_supported_codecs">Device &amp; Phone supported codecs:</string>
+    <string name="phone_supported_codecs">Phone supported codecs:</string>
 </resources>

@@ -12,14 +12,15 @@
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_above="@id/nav"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/nav">
+            app:layout_constraintBottom_toTopOf="@+id/nav"
+            app:layout_constraintTop_toTopOf="parent">
 
             <FrameLayout
                 android:id="@+id/tab_container"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content">
+                <include layout="@layout/info" />
+            </FrameLayout>
         </ScrollView>
 
         <com.google.android.material.bottomnavigation.BottomNavigationView

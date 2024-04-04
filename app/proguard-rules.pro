@@ -19,3 +19,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keep public class ru.kirddos.exta2dp.modules.SettingsUIModule
+-keep public class ru.kirddos.exta2dp.modules.SystemFrameworkModule
+-keep public class ru.kirddos.exta2dp.modules.BluetoothAppModule

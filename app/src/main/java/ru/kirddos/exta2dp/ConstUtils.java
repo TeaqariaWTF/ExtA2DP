@@ -61,6 +61,11 @@ public class ConstUtils {
     public static final int FLAC_STEREO = 0x2;
     public static final int FLAC_MONO = 0x1;
 
+    public static final int LC3PLUS_HR_FRAME_DURATION_MASK = 0xF0;
+    public static final int LC3PLUS_HR_FRAME_DURATION_100_MS = 0x40;
+    public static final int LC3PLUS_HR_FRAME_DURATION_050_MS = 0x20;
+    public static final int LC3PLUS_HR_FRAME_DURATION_025_MS = 0x10;
+
     // In standard case, low0 is available
     public static final int lhdc_quality_index_adjust_offset = 0;
     // In case of low0 is removed, shift the rest indices
@@ -102,6 +107,15 @@ public class ConstUtils {
     public static String getCodecName(BluetoothCodecConfig config) {
         return getCodecName(config.getCodecType());
     }
+
+    public static String getAnyCodecName(BluetoothCodecConfig config) {
+        int type = config.getCodecType();
+        return isCustomCodec(type) ? getCustomCodecName(type) : getCodecName(type);
+    }
+    public static String getAnyCodecName(int type) {
+        return isCustomCodec(type) ? getCustomCodecName(type) : getCodecName(type);
+    }
+
 
     public static boolean isCustomCodec(int type) {
         return isLHDC(type) ||

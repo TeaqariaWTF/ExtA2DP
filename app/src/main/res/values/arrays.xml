@@ -191,5 +191,118 @@
         <item>Adaptive Bit Rate</item>
     </string-array>
 
+    <string-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_2m5_48k">
+        <item>345.6 kbps</item>
+        <item>480 kbps</item>
+        <item>640 kbps</item>
+        <item>832 kbps</item>
+        <item>1344 kbps</item>
+        <item>Auto Bitrate</item>
+    </string-array>
 
+    <string-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_2m5_96k">
+        <item>396.8 kbps</item>
+        <item>512 kbps</item>
+        <item>704 kbps</item>
+        <item>832 kbps</item>
+        <item>1344 kbps</item>
+        <item>Auto Bitrate</item>
+    </string-array>
+
+    <string-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_05m_48k">
+        <item>297.6 kbps</item>
+        <item>384 kbps</item>
+        <item>576 kbps</item>
+        <item>832 kbps</item>
+        <item>1200 kbps</item>
+        <item>Auto Bitrate</item>
+    </string-array>
+
+    <string-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_05m_96k">
+        <item>348.8 kbps</item>
+        <item>416 kbps</item>
+        <item>672 kbps</item>
+        <item>832 kbps</item>
+        <item>1200 kbps</item>
+        <item>Auto Bitrate</item>
+    </string-array>
+
+    <string-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_10m_48k">
+        <item>249.6 kbps</item>
+        <item>336 kbps</item>
+        <item>656 kbps</item>
+        <item>832 kbps</item>
+        <item>1000 kbps</item>
+        <item>Auto Bitrate</item>
+    </string-array>
+
+    <string-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_10m_96k">
+        <item>299.2 kbps</item>
+        <item>400 kbps</item>
+        <item>656 kbps</item>
+        <item>832 kbps</item>
+        <item>1000 kbps</item>
+        <item>Auto Bitrate</item>
+    </string-array>
+
+    <integer-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_2m5_48k">
+        <item>345600</item>
+        <item>480000</item>
+        <item>640000</item>
+        <item>832000</item>
+        <item>1344000</item>
+        <item>0</item>
+    </integer-array>
+
+    <integer-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_2m5_96k">
+        <item>396800</item>
+        <item>512000</item>
+        <item>704000</item>
+        <item>832000</item>
+        <item>1344000</item>
+        <item>0</item>
+    </integer-array>
+
+    <integer-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_05m_48k">
+        <item>297600</item>
+        <item>384000</item>
+        <item>576000</item>
+        <item>832000</item>
+        <item>1200000</item>
+        <item>0</item>
+    </integer-array>
+
+    <integer-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_05m_96k">
+        <item>348800</item>
+        <item>416000</item>
+        <item>672000</item>
+        <item>832000</item>
+        <item>1200000</item>
+        <item>0</item>
+    </integer-array>
+
+    <integer-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_10m_48k">
+        <item>249600</item>
+        <item>336000</item>
+        <item>656000</item>
+        <item>832000</item>
+        <item>1000000</item>
+        <item>0</item>
+    </integer-array>
+
+    <integer-array name="bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_10m_96k">
+        <item>299200</item>
+        <item>400000</item>
+        <item>656000</item>
+        <item>832000</item>
+        <item>1000000</item>
+        <item>0</item>
+    </integer-array>
+
+
+    <string-array name="lc3plus_frame_ms_summaries">
+        <item>2.5 ms</item>
+        <item>5 ms</item>
+        <item>10 ms</item>
+    </string-array>
 </resources>

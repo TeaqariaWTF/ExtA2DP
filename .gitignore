@@ -20,3 +20,5 @@ so/
 magisk/
 logs/
 armeabi-v7a/
+app/release
+app/src/main/*-bak

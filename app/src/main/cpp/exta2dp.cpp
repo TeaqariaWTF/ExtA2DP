@@ -13,7 +13,7 @@
 
 #define TAG "BluetoothAppModuleNative"
 
-//#define DEBUG
+#define DEBUG
 
 #define PROPERTY_BT_LIBRARY_NAME "ro.bluetooth.library_name"
 #define DEFAULT_BT_LIBRARY_NAME "libbluetooth_qti.so"
@@ -103,6 +103,10 @@ static int glue_init(bt_callbacks_t *callbacks, bool guest_mode,
     if ((callbacks->size < sizeof(bt_callbacks_t))) {
         __android_log_print(ANDROID_LOG_DEBUG, TAG,
                             "%s: Applying fix for older callbacks (based on size: %zu < %zu)",
+                            __func__, callbacks->size, sizeof(bt_callbacks_t));
+    } else {
+        __android_log_print(ANDROID_LOG_DEBUG, TAG,
+                            "%s: Callback size orig %zu ext %zu",
                             __func__, callbacks->size, sizeof(bt_callbacks_t));
     }
 

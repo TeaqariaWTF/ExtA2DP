@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 import android.content.SharedPreferences;
 import android.view.WindowInsets;
@@ -91,8 +93,11 @@ public class ExtA2DPActivity extends Activity {
     ChipGroup sampleRates;
     ChipGroup bitsPerSamples;
     ChipGroup channelModes;
+    ChipGroup frameMs;
     ChipGroup bitrates;
+
     TextView bitrateText;
+    TextView frameMsText;
 
     private final BroadcastReceiver bluetoothA2dpReceiver = new BroadcastReceiver() {
         @Override
@@ -267,6 +272,10 @@ public class ExtA2DPActivity extends Activity {
                 qualityIndex = (int) (config.getCodecSpecific1() & 0xFF);
             }
             return getResources().getStringArray(R.array.bluetooth_a2dp_codec_lhdc_playback_quality_summaries)[qualityIndex];
+        } else if (type == SOURCE_CODEC_TYPE_LC3PLUS_HR) {
+            int bps = (int) config.getCodecSpecific1();
+            String[] bitrates = getResources().getStringArray(R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_2m5_48k);
+            return bps > 0 ? String.format(Locale.getDefault(),"%.1f", bps / 1000.) + " " + getResources().getString(R.string.kbps) : bitrates[bitrates.length - 1];
         }
         return "N/A";
     }
@@ -337,6 +346,10 @@ public class ExtA2DPActivity extends Activity {
         TextView quality = findViewById(R.id.quality);
         TextView name = findViewById(R.id.name);
         TextView mac = findViewById(R.id.mac);
+
+        TextView phoneCodecs = findViewById(R.id.phone_supported_codecs_text);
+        TextView deviceCodecs = findViewById(R.id.device_supported_codecs_text);
+
         try {
             codec.setText(resolveCodecName(current, true));
             quality.setText(resolveCodecQuality(current));
@@ -346,6 +359,33 @@ public class ExtA2DPActivity extends Activity {
 
         if (device == null) {
             return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Iterator<Integer> it = localCapabilities.stream().map(BluetoothCodecConfig::getCodecType).sorted().iterator(); it.hasNext(); ) {
+            sb.append(getAnyCodecName(it.next()));
+            if (it.hasNext()) {
+                sb.append(", ");
+            }
+        }
+        try {
+            phoneCodecs.setText(sb);
+        } catch (NullPointerException e) {
+            Log.w(TAG, "setMainText: " , e);
+        }
+
+        sb = new StringBuilder();
+        for (Iterator<Integer> it = selectableCapabilities.stream().map(BluetoothCodecConfig::getCodecType).sorted().iterator(); it.hasNext(); ) {
+            sb.append(getAnyCodecName(it.next()));
+            if (it.hasNext()) {
+                sb.append(", ");
+            }
+        }
+
+        try {
+            deviceCodecs.setText(sb);
+        } catch (NullPointerException e) {
+            Log.w(TAG, "setMainText: " , e);
         }
 
         try {
@@ -367,16 +407,23 @@ public class ExtA2DPActivity extends Activity {
             sampleRates = findViewById(R.id.sample_rates);
             bitsPerSamples = findViewById(R.id.bits_per_samples);
             channelModes = findViewById(R.id.channel_modes);
+            frameMs = findViewById(R.id.frame_ms);
+            frameMsText = findViewById(R.id.frameMsText);
             bitrates = findViewById(R.id.bitrates);
             bitrateText = findViewById(R.id.bitrateText);
 
+
             if (currentConfig != null && selectableCapabilities != null && localCapabilities != null) {
                 setMainText(currentConfig);
-                addCodecChips();
-                addSampleRateChips();
-                addBitsPerSampleChips();
-                addChannelModeChips();
-                addBitrateChips();
+                try {
+                    addCodecChips();
+                    addSampleRateChips();
+                    addBitsPerSampleChips();
+                    addChannelModeChips();
+                    addBitrateChips();
+                    addFrameMsChips();
+                } catch (NullPointerException ignored) {
+                }
             }
         } else if (tab.isSettings()) {
             /*MaterialCardView companion = findViewById(R.id.module_card);
@@ -391,7 +438,7 @@ public class ExtA2DPActivity extends Activity {
                         .setNegativeButton(getString(R.string.yes), (dialog, which) -> {
                             Shell.Result result = Shell.cmd("setprop ctl.restart audioserver").exec();
                             if (result.getCode() != 0) {
-                                Toast.makeText(this, "Restarting audioserver failed, see logcat", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, "Restarting audioserver failed, do you have root?", Toast.LENGTH_SHORT).show();
                                 Log.e(TAG, "Code: " + result.getCode());
                                 Log.e(TAG, "Out: " + result.getOut());
                                 Log.e(TAG, "Err: " + result.getErr());
@@ -662,6 +709,7 @@ public class ExtA2DPActivity extends Activity {
         int type = currentConfig.getCodecType();
         long cs1 = currentConfig.getCodecSpecific1();
         String[] names;
+        int[] values;
         if (type == BluetoothCodecConfig.SOURCE_CODEC_TYPE_LDAC) {
             names = getResources().getStringArray(R.array.bluetooth_a2dp_codec_ldac_playback_quality_summaries);
             for (int i = 0; i < 4; i++) {
@@ -705,8 +753,60 @@ public class ExtA2DPActivity extends Activity {
                 Log.d(TAG, i + " -> " + (LHDC_QUALITY_DEFAULT_MAGIC | (i + lhdc_quality_index_adjust_offset)));
             }
         } else if (type == SOURCE_CODEC_TYPE_LC3PLUS_HR) {
-            Toast.makeText(this, "Not yet implemented!", Toast.LENGTH_SHORT).show();
-            return;
+            int stringId, intId;
+            if (currentConfig.getSampleRate() == BluetoothCodecConfig.SAMPLE_RATE_48000) {
+                stringId = switch ((int) (currentConfig.getCodecSpecific2() & LC3PLUS_HR_FRAME_DURATION_MASK)) {
+                    case LC3PLUS_HR_FRAME_DURATION_025_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_2m5_48k;
+                    case LC3PLUS_HR_FRAME_DURATION_050_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_05m_48k;
+                    case LC3PLUS_HR_FRAME_DURATION_100_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_10m_48k;
+                    default -> 0;
+                };
+                intId = switch ((int) (currentConfig.getCodecSpecific2() & LC3PLUS_HR_FRAME_DURATION_MASK)) {
+                    case LC3PLUS_HR_FRAME_DURATION_025_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_2m5_48k;
+                    case LC3PLUS_HR_FRAME_DURATION_050_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_05m_48k;
+                    case LC3PLUS_HR_FRAME_DURATION_100_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_10m_48k;
+                    default -> 0;
+                };
+
+            } else if (currentConfig.getSampleRate() == BluetoothCodecConfig.SAMPLE_RATE_96000) {
+                stringId = switch ((int) (currentConfig.getCodecSpecific2() & LC3PLUS_HR_FRAME_DURATION_MASK)) {
+                    case LC3PLUS_HR_FRAME_DURATION_025_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_2m5_96k;
+                    case LC3PLUS_HR_FRAME_DURATION_050_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_05m_96k;
+                    case LC3PLUS_HR_FRAME_DURATION_100_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_summaries_10m_96k;
+                    default -> 0;
+                };
+                intId = switch ((int) (currentConfig.getCodecSpecific2() & LC3PLUS_HR_FRAME_DURATION_MASK)) {
+                    case LC3PLUS_HR_FRAME_DURATION_025_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_2m5_96k;
+                    case LC3PLUS_HR_FRAME_DURATION_050_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_05m_96k;
+                    case LC3PLUS_HR_FRAME_DURATION_100_MS -> R.array.bluetooth_a2dp_codec_lc3plus_hr_playback_quality_values_10m_96k;
+                    default -> 0;
+                };
+
+            } else {
+                Toast.makeText(this, "Error: unsupported sample rate: " + currentConfig.getSampleRate(), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (intId == 0 || stringId == 0) {
+                Toast.makeText(this, "Error: unsupported frame duration: " + currentConfig.getCodecSpecific2(), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            values = getResources().getIntArray(intId);
+            names = getResources().getStringArray(stringId);
+
+            assert values.length == names.length;
+
+            for (int i = 0; i < names.length; i++) {
+                Chip chip = (Chip) getLayoutInflater().inflate(R.layout.chip, null);
+                chip.setId(View.generateViewId());
+                chip.setText(names[i]);
+                if (cs1 == values[i]) {
+                    id = chip.getId();
+                }
+                chip.setTag(values[i]);
+                bitrates.addView(chip);
+            }
         } else {
             bitrates.setVisibility(View.GONE);
             bitrateText.setVisibility(View.GONE);
@@ -730,7 +830,8 @@ public class ExtA2DPActivity extends Activity {
                 idx = (cs & LHDC_QUALITY_DEFAULT_TAG) == LHDC_QUALITY_DEFAULT_MAGIC ? cs & 0xff : 0;
                 curIdx = (cs1 & LHDC_QUALITY_DEFAULT_TAG) == LHDC_QUALITY_DEFAULT_MAGIC ? (int) (cs1 & 0xff) : 0;
             } else if (type == SOURCE_CODEC_TYPE_LC3PLUS_HR) {
-                return;
+                idx = cs;
+                curIdx = (int) cs1;
             } else {
                 return;
             }
@@ -747,6 +848,76 @@ public class ExtA2DPActivity extends Activity {
                     .setSampleRate(currentConfig.getSampleRate())
                     .setCodecSpecific1(cs)
                     .setCodecSpecific2(currentConfig.getCodecSpecific2())
+                    .setCodecSpecific3(currentConfig.getCodecSpecific3())
+                    .setCodecSpecific4(currentConfig.getCodecSpecific4())
+                    .setCodecPriority(BluetoothCodecConfig.CODEC_PRIORITY_HIGHEST).build();
+            setCodecConfigPreference(newConfig);
+        });
+    }
+
+    void addFrameMsChips() {
+        frameMs.removeAllViews();
+        int id = View.NO_ID;
+
+
+        String[] names = getResources().getStringArray(R.array.lc3plus_frame_ms_summaries);
+        int[] values = {LC3PLUS_HR_FRAME_DURATION_025_MS, LC3PLUS_HR_FRAME_DURATION_050_MS, LC3PLUS_HR_FRAME_DURATION_100_MS};
+
+        if (currentConfig != null) {
+            BluetoothCodecConfig capability = currentConfig;
+
+            for (var config : selectableCapabilities) {
+                if (config.getCodecType() == currentConfig.getCodecType()) {
+                    capability = config;
+                }
+            }
+
+            if (capability.getCodecType() != SOURCE_CODEC_TYPE_LC3PLUS_HR) {
+                frameMs.setVisibility(View.GONE);
+                frameMsText.setVisibility(View.GONE);
+                return;
+            }
+
+            for (int i = 0; i < values.length; i++) {
+                if ((capability.getCodecSpecific2() & values[i]) != 0) {
+                    Chip chip = (Chip) getLayoutInflater().inflate(R.layout.chip, null);
+                    chip.setId(View.generateViewId());
+                    chip.setText(names[i]);
+                    if (currentConfig.getCodecSpecific2() == values[i]) {
+                        id = chip.getId();
+                    }
+                    chip.setTag(i);
+                    frameMs.addView(chip);
+                }
+            }
+        } else {
+            frameMs.setVisibility(View.GONE);
+            frameMsText.setVisibility(View.GONE);
+            return;
+        }
+
+        frameMs.setVisibility(View.VISIBLE);
+        frameMsText.setVisibility(View.VISIBLE);
+
+        if (id != View.NO_ID) frameMs.check(id);
+
+        frameMs.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            assert checkedIds.size() == 1;
+            Chip chip = findViewById(checkedIds.get(0));
+            int idx_ms = (int) chip.getTag();
+            if (currentConfig.getCodecSpecific2() == values[idx_ms]) {
+                return;
+            }
+            long cs2 = values[idx_ms];
+
+            Toast.makeText(this, "Changed to " + names[idx_ms], Toast.LENGTH_SHORT).show();
+            BluetoothCodecConfig newConfig = new BluetoothCodecConfig.Builder()
+                    .setCodecType(currentConfig.getCodecType())
+                    .setBitsPerSample(currentConfig.getBitsPerSample())
+                    .setChannelMode(currentConfig.getChannelMode())
+                    .setSampleRate(currentConfig.getSampleRate())
+                    .setCodecSpecific1(currentConfig.getCodecSpecific1())
+                    .setCodecSpecific2(cs2)
                     .setCodecSpecific3(currentConfig.getCodecSpecific3())
                     .setCodecSpecific4(currentConfig.getCodecSpecific4())
                     .setCodecPriority(BluetoothCodecConfig.CODEC_PRIORITY_HIGHEST).build();
