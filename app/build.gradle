@@ -8,10 +8,10 @@ android {
 
     defaultConfig {
         applicationId "ru.kirddos.exta2dp"
-        minSdk 33
+        minSdk 34
         targetSdk 34
-        versionCode 230
-        versionName "2.3.0"
+        versionCode 300
+        versionName "3.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -44,7 +44,7 @@ android {
         }
     }
 
-    ndkVersion '26.1.10909125'
+    ndkVersion '26.2.11394342'
     externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
@@ -60,6 +60,9 @@ dependencies {
     implementation 'org.lsposed.hiddenapibypass:hiddenapibypass:4.3'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.test:monitor:1.6.1'
+    implementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'junit:junit:4.12'
     compileOnly files('libs/api-release.aar')
     implementation files('libs/service-release.aar')
     implementation files('libs/interface-release.aar')

@@ -8,7 +8,7 @@
 
 #include "lsp_native.h"
 #include "bluetooth.h"
-#include "bluetooth_callbacks_glue.h"
+//#include "bluetooth_callbacks_glue.h"
 #include "bluetooth_a2dp_glue.h"
 
 #define TAG "BluetoothAppModuleNative"
@@ -19,17 +19,32 @@
 #define DEFAULT_BT_LIBRARY_NAME "libbluetooth_qti.so"
 #define EXTA2DP_BT_LIBRARY_NAME "libbluetooth_exta2dp.so"
 
+#define DEFAULT_BT_JNI_LIBRARY_NAME "libbluetooth_qti_jni.so"
+#define EXTA2DP_BT_JNI_LIBRARY_NAME "libbluetooth_exta2dp_jni.so"
+
+#define SHARED_LIB_POSTFIX ".so"
+#define SHARED_JNI_LIB_POSTFIX "_jni.so"
 
 static HookFunType hook_func = nullptr;
 
-static void *(*backup_dlsym)(void *handle, const char *name);
+//static void *(*backup_dlsym)(void *, const char *);
+//static void *(*backup_dlopen)(const char *, int);
 
-static char bt_lib_path[PROP_VALUE_MAX] = "libbluetooth_qti.so";
+static std::string bt_lib;
+static std::string bt_jni_lib;
+
+static char bt_lib_path[PROP_VALUE_MAX] = DEFAULT_BT_LIBRARY_NAME;
+static char bt_jni_lib_path[PROP_VALUE_MAX] = DEFAULT_BT_JNI_LIBRARY_NAME;
 static std::unordered_map<std::string, void *> name_to_handle = {};
 static std::unordered_map<void *, std::string> handle_to_name = {};
 static bt_interface_t *original_interface = nullptr;
 static bt_interface_t *exta2dp_interface;
 static void *exta2dp_handle = nullptr;
+static void *exta2dp_jni_handle = nullptr;
+static void *exta2dp_jni_onload = nullptr;
+
+static void (*exta2dp_jni_setBluetoothInterface)(const bt_interface_t *) = nullptr;
+
 
 static int (*exta2dp_init)(bt_callbacks_t *callbacks, bool guest_mode,
                            bool is_common_criteria_mode, int config_compare_result,
@@ -38,7 +53,7 @@ static int (*exta2dp_init)(bt_callbacks_t *callbacks, bool guest_mode,
 
 static const void *(*exta2dp_get_profile_interface)(const char *name) = nullptr;
 
-#if 1
+#if 0
 #include <execinfo.h>
 
 static bool dummy(void) {
@@ -74,13 +89,6 @@ static bt_callbacks_t dummy_callbacks = {
 };
 #endif
 
-static int ends_with(const char *str, const char *suffix) {
-    size_t str_len = strlen(str);
-    size_t suffix_len = strlen(suffix);
-    return (str_len >= suffix_len) &&
-           (!memcmp(str + str_len - suffix_len, suffix, suffix_len));
-}
-
 #ifdef DEBUG
 static void print_map(std::unordered_map<std::string, void *> map) {
     for (auto& it: map) {
@@ -94,11 +102,12 @@ static void print_map(std::unordered_map<void *, std::string> map) {
 }
 #endif
 
+
 static int glue_init(bt_callbacks_t *callbacks, bool guest_mode,
                      bool is_common_criteria_mode, int config_compare_result,
                      const char **init_flags, bool is_atv,
                      const char *user_data_directory) {
-    original_callbacks.fresh = callbacks;
+    /*original_callbacks.fresh = callbacks;
 
     if ((callbacks->size < sizeof(bt_callbacks_t))) {
         __android_log_print(ANDROID_LOG_DEBUG, TAG,
@@ -108,10 +117,10 @@ static int glue_init(bt_callbacks_t *callbacks, bool guest_mode,
         __android_log_print(ANDROID_LOG_DEBUG, TAG,
                             "%s: Callback size orig %zu ext %zu",
                             __func__, callbacks->size, sizeof(bt_callbacks_t));
-    }
+    }*/
 
     //original_interface->init(&dummy_callbacks, guest_mode, is_common_criteria_mode, config_compare_result, init_flags, is_atv, user_data_directory);
-    return exta2dp_init(&glue_callbacks, guest_mode, is_common_criteria_mode, config_compare_result,
+    return exta2dp_init(callbacks, guest_mode, is_common_criteria_mode, config_compare_result,
                         init_flags, is_atv, user_data_directory);
 };
 
@@ -122,7 +131,7 @@ static int glue_init(bt_callbacks_t *callbacks, bool guest_mode,
 
 static const void *glue_get_profile_interface(const char *name) {
     const void *result = exta2dp_get_profile_interface(name);
-    if (original_callbacks.fresh != nullptr && result == nullptr) {
+    if (result == nullptr) {
         __android_log_print(ANDROID_LOG_DEBUG, TAG, "%s: %s from bt_adv_audio is not available", __func__, name);
         //return original_interface->get_profile_interface(name);
         return nullptr;
@@ -136,13 +145,12 @@ static const void *glue_get_profile_interface(const char *name) {
     return result;
 }
 
+#if 0
 #define REPLACE_BTIF
 
-static void *fake_dlsym(void *handle, char *name) {
-    bool isRTLD_DEFAULT = handle == RTLD_DEFAULT;
-    bool ends_with_module = ends_with(name, "module");
-    bool is_bt_interface = !strcmp(name, BLUETOOTH_INTERFACE_STRING);
-    if (isRTLD_DEFAULT && ends_with_module) {
+static void *fake_dlsym(void *handle, char *cname) {
+    std::string name(cname);
+    if (handle == RTLD_DEFAULT && name.ends_with("module")) {
 #ifndef REPLACE_BTIF
         handle = name_to_handle[bt_lib_path];
 #else
@@ -155,27 +163,31 @@ static void *fake_dlsym(void *handle, char *name) {
         dladdr(ret, &info);
         __android_log_print(ANDROID_LOG_DEBUG, TAG, "dlsym hook called from %s / %s!",
                             info.dli_fname, info.dli_sname);
-        if (ends_with(info.dli_fname, bt_lib_path)) {
+
+        std::string dli_fname(info.dli_fname);
+
+        if (dli_fname.ends_with(bt_lib)) {
             __android_log_print(ANDROID_LOG_DEBUG, TAG,
-                                "dlsym hook called for bt_lib_path: %s, module %s", bt_lib_path,
-                                name);
+                                "dlsym hook called for bt_lib: %s, module %s", bt_lib_path,
+                                cname);
             handle = name_to_handle[DEFAULT_BT_LIBRARY_NAME];
-        } else if (ends_with(info.dli_fname, EXTA2DP_BT_LIBRARY_NAME)) {
+        } else if (dli_fname.ends_with(EXTA2DP_BT_LIBRARY_NAME)) {
             handle = exta2dp_handle;
         }
 #endif
 #ifdef DEBUG
-        __android_log_print(ANDROID_LOG_DEBUG, TAG, "Change (null) to %p for library %s symbol %s", handle, bt_lib_path, name);
+        __android_log_print(ANDROID_LOG_DEBUG, TAG, "Change (null) to %p for library %s symbol %s", handle, bt_lib_path, cname);
         print_map(name_to_handle);
 #endif
-    } else if (is_bt_interface) {
+    } else if (name == BLUETOOTH_INTERFACE_STRING) {
 #ifdef DEBUG
         __android_log_print(ANDROID_LOG_DEBUG, TAG, "Hooking bluetooth library functions!");
-#endif
-        original_interface = (bt_interface_t *) backup_dlsym(handle, name);
+
+        original_interface = (bt_interface_t *) backup_dlsym(handle, cname);
         __android_log_print(ANDROID_LOG_DEBUG, TAG,
                             "Original library interface size %zu, exta2dp %zu",
                             original_interface->size, exta2dp_interface->size);
+#endif
 #ifndef REPLACE_BTIF
         exta2dp_init = original_interface->init;
         original_interface->init = glue_init;
@@ -186,11 +198,22 @@ static void *fake_dlsym(void *handle, char *name) {
     }
 #ifdef DEBUG
     __android_log_print(ANDROID_LOG_DEBUG, TAG, "dlsym %s from %s (%p) : isRTLD_DEFAULT %d, ends_with_module: %d",
-                        name, handle_to_name[handle].c_str(), handle, isRTLD_DEFAULT, ends_with_module);
+                        cname, handle_to_name[handle].c_str(), handle, handle == RTLD_DEFAULT, name.ends_with("module"));
 #endif
-    return backup_dlsym(handle, name);
+    return backup_dlsym(handle, cname);
 }
-
+#endif
+/*
+static void *fake_dlopen(const char *filename, int flags) {
+    if (!strcmp(filename, bt_jni_lib_path)) {
+        return exta2dp_jni_handle;
+    }
+    if (!strcmp(filename, bt_lib_path)) {
+        return exta2dp_handle;
+    }
+    return backup_dlopen(filename, flags);
+}
+*/
 
 static int property_get(const char *key, char *value, const char *default_value) {
     int len = __system_property_get(key, value);
@@ -205,19 +228,29 @@ static int property_get(const char *key, char *value, const char *default_value)
     return len;
 }
 
-static void on_library_loaded(const char *name, void *handle) {
+static void on_library_loaded(const char *cname, void *handle) {
 #ifdef DEBUG
-    __android_log_print(ANDROID_LOG_DEBUG, TAG, "Library %s loaded at %p", name, handle);
+    __android_log_print(ANDROID_LOG_DEBUG, TAG, "Library %s loaded at %p", cname, handle);
 #endif
-    if (ends_with(name, "libbluetooth_qti_jni.so")) {
+    /*if (ends_with(name, "libbluetooth_qti_jni.so")) {
         __android_log_print(ANDROID_LOG_DEBUG, TAG,
                             "Hooking libbluetooth_qti_jni... Well, kind of");
         getCallbackEnv = (JNIEnv *(*)()) dlsym(handle, "_ZN7android14getCallbackEnvEv");
         isCallbackThread = (bool (*)()) dlsym(handle, "_ZN7android16isCallbackThreadEv");
-    }
+    }*/
+
+    std::string name(cname);
 
     handle_to_name.insert(std::make_pair(handle, name));
     name_to_handle.insert(std::make_pair(name, handle));
+
+    if (name.ends_with(bt_jni_lib)) {
+        void *jni_onload = dlsym(handle, "JNI_OnLoad");
+        void *backup = NULL;
+
+        hook_func(jni_onload, exta2dp_jni_onload, &backup);
+        __android_log_print(ANDROID_LOG_DEBUG, TAG, "Hooking JNI_OnLoad (%p) from %s with one from %s: %p", backup, handle_to_name[handle].c_str(), EXTA2DP_BT_JNI_LIBRARY_NAME, exta2dp_jni_onload);
+    }
 }
 
 extern "C"
@@ -233,7 +266,7 @@ void Java_ru_kirddos_exta2dp_modules_BluetoothAppModule_setCodecIds(JNIEnv *env,
         for (int i = 0; i < BTAV_A2DP_QVA_CODEC_INDEX_SOURCE_MAX; i++) {
             codec_indices[i] = codec_ids[i];
             __android_log_print(ANDROID_LOG_DEBUG, TAG, "%s: Setting codec %s stack ID %d to %d", __func__,
-                                codec_index_to_name((btav_a2dp_codec_index_t) i).c_str(), i, codec_ids[i]);
+                                codec_index_to_name((btav_a2dp_codec_index_t) i), i, codec_ids[i]);
         }
     } else {
         __android_log_print(ANDROID_LOG_DEBUG, TAG, "%s: Setting codec IDs failed: incorrect length %d", __func__, length);
@@ -256,8 +289,43 @@ NativeOnModuleLoaded native_init(const NativeAPIEntries *entries) {
     __android_log_print(ANDROID_LOG_DEBUG, TAG,
                         "LSP native hook library loaded, API v%d, hook function %p",
                         entries->version, hook_func);
-    property_get(PROPERTY_BT_LIBRARY_NAME, bt_lib_path, DEFAULT_BT_LIBRARY_NAME);
-    __android_log_print(ANDROID_LOG_DEBUG, TAG, "Bluetooth library name: %s", bt_lib_path);
+    const int len = property_get(PROPERTY_BT_LIBRARY_NAME, bt_lib_path, DEFAULT_BT_LIBRARY_NAME);
+    __android_log_print(ANDROID_LOG_DEBUG, TAG, "Bluetooth library name: %s (len %d)", bt_lib_path, len);
+
+    if (len < 0) {
+        __android_log_print(ANDROID_LOG_DEBUG, TAG, "Bluetooth library name: Error getting sysprop, negative length");
+    }
+
+    const size_t prefix_len = len - strlen(SHARED_LIB_POSTFIX);
+
+    memcpy(bt_jni_lib_path, bt_lib_path, prefix_len);
+    memcpy(&bt_jni_lib_path[prefix_len], SHARED_JNI_LIB_POSTFIX, sizeof(SHARED_JNI_LIB_POSTFIX));
+
+    __android_log_print(ANDROID_LOG_DEBUG, TAG, "Bluetooth JNI library name: %s", bt_jni_lib_path);
+
+    bt_lib = std::string(bt_lib_path);
+    bt_jni_lib = std::string(bt_jni_lib_path);
+
+    exta2dp_jni_handle = dlopen(EXTA2DP_BT_JNI_LIBRARY_NAME, RTLD_NOW);
+
+    if (exta2dp_jni_handle == nullptr) {
+        __android_log_print(ANDROID_LOG_DEBUG, TAG, "ExtA2DP JNI bluetooth library load failed: %s",
+                            dlerror());
+    }
+
+    exta2dp_jni_onload = dlsym(exta2dp_jni_handle, "JNI_OnLoad");
+
+    if (exta2dp_jni_onload == nullptr) {
+        __android_log_print(ANDROID_LOG_DEBUG, TAG, "ExtA2DP JNI bluetooth library: loading JNI_OnLoad failed: %s",
+                            dlerror());
+    }
+
+    exta2dp_jni_setBluetoothInterface = (void (*)(const bt_interface_t *)) dlsym(exta2dp_jni_handle, "setBluetoothInterface");
+
+        if (exta2dp_jni_setBluetoothInterface == nullptr) {
+        __android_log_print(ANDROID_LOG_DEBUG, TAG, "ExtA2DP JNI bluetooth library: loading setBluetoothInterface failed: %s",
+                            dlerror());
+    }
 
     exta2dp_handle = dlopen(EXTA2DP_BT_LIBRARY_NAME, RTLD_NOW);
     // TODO: android_get_exported_namespace and android_dlopen_ext to drop libandroidicu.so and others
@@ -278,6 +346,10 @@ NativeOnModuleLoaded native_init(const NativeAPIEntries *entries) {
         exta2dp_interface->get_profile_interface = glue_get_profile_interface;
     }
 
-    hook_func((void *) dlsym, (void *) fake_dlsym, (void **) &backup_dlsym);
+    exta2dp_jni_setBluetoothInterface(exta2dp_interface);
+
+    //hook_func((void *) dlsym, (void *) fake_dlsym, (void **) &backup_dlsym);
+    //hook_func((void *) dlopen, (void *) fake_dlopen, (void **) &backup_dlopen);
+
     return on_library_loaded;
 }

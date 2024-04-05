@@ -16,6 +16,8 @@ import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothCodecConfig;
 import android.bluetooth.BluetoothCodecStatus;
 import android.bluetooth.BluetoothDevice;
+import android.content.AttributionSource;
+import android.os.Parcel;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
@@ -253,7 +255,6 @@ public class BluetoothAppModule extends XposedModule {
             Field assigned_codec_length = a2dpCodecConfig.getDeclaredField("assigned_codec_length");
             assigned_codec_length.setAccessible(true);
 
-
             hookAfter(assignCodecConfigPriorities, (callback, state) -> {
                 try {
                     BluetoothCodecConfig[] mCodecConfigPriorities = (BluetoothCodecConfig[]) callback.getResult();
@@ -265,7 +266,7 @@ public class BluetoothAppModule extends XposedModule {
                     }
 
 
-                    BluetoothCodecConfig[] res = new BluetoothCodecConfig[pos + 5]; // LHDC 2, 3/4, 5 and LC3plus HR/FLAC for now
+                    BluetoothCodecConfig[] res = new BluetoothCodecConfig[pos + 5]; // LHDC 2/3+4/5, LC3plus HR and FLAC for now
 
                     System.arraycopy(mCodecConfigPriorities, 0, res, 0, pos);
 
@@ -281,7 +282,7 @@ public class BluetoothAppModule extends XposedModule {
                             }
                         }
                     } catch (Exception e) {
-                        basePriority = 9001;
+                        basePriority = 11000;
                     }
 
                     //noinspection JavaReflectionMemberAccess
@@ -303,7 +304,7 @@ public class BluetoothAppModule extends XposedModule {
         } catch (ClassNotFoundException | NoSuchMethodException | NoSuchFieldException e) {
             log(TAG + " Exception: ", e);
         }
-        hookServiceStart(param.getClassLoader(), "com.android.bluetooth.cc.CCService");
+        /*hookServiceStart(param.getClassLoader(), "com.android.bluetooth.cc.CCService");
         hookServiceStart(param.getClassLoader(), "com.android.bluetooth.pc.PCService");
         hookServiceStart(param.getClassLoader(), "com.android.bluetooth.mcp.McpService");
         hookServiceStart(param.getClassLoader(), "com.android.bluetooth.bc.BCService");
@@ -344,8 +345,15 @@ public class BluetoothAppModule extends XposedModule {
             Field mVendor = adapterService.getDeclaredField("mVendor");
             mVendor.setAccessible(true);
 
-            Method setBluetoothClassFromConfig = adapterService.getDeclaredMethod("setBluetoothClassFromConfig");
-            setBluetoothClassFromConfig.setAccessible(true);
+            Method setBluetoothClassFromConfigOrNull = null;
+            try {
+                setBluetoothClassFromConfigOrNull = adapterService.getDeclaredMethod("setBluetoothClassFromConfig");
+                setBluetoothClassFromConfigOrNull.setAccessible(true);
+            } catch (NoSuchMethodException e) {
+                log(TAG + " Method setBluetoothClassFromConfig does not exist: ", e);
+            }
+
+            Method setBluetoothClassFromConfig = setBluetoothClassFromConfigOrNull;
             Method initProfileServices = adapterService.getDeclaredMethod("initProfileServices");
             initProfileServices.setAccessible(true);
             Method getAdapterPropertyNative = adapterService.getDeclaredMethod("getAdapterPropertyNative", int.class);
@@ -362,11 +370,18 @@ public class BluetoothAppModule extends XposedModule {
             Field ioCapsField = abstractionLayer.getDeclaredField("BT_PROPERTY_LOCAL_IO_CAPS");
             ioCapsField.setAccessible(true);
             int BT_PROPERTY_LOCAL_IO_CAPS = ioCapsField.getInt(null);
-            Field ioCapsBleField = abstractionLayer.getDeclaredField("BT_PROPERTY_LOCAL_IO_CAPS_BLE");
-            ioCapsBleField.setAccessible(true);
-            int BT_PROPERTY_LOCAL_IO_CAPS_BLE = ioCapsBleField.getInt(null);
+            Field ioCapsBleField = null;
+            try {
+                ioCapsBleField = abstractionLayer.getDeclaredField("BT_PROPERTY_LOCAL_IO_CAPS_BLE");
+                ioCapsBleField.setAccessible(true);
+            } catch (NoSuchFieldException e) {
+                ioCapsBleField = abstractionLayer.getDeclaredField("BT_PROPERTY_RESERVED_0F");
+                ioCapsBleField.setAccessible(true);
+                log(TAG + " Field BT_PROPERTY_RESERVED_0F does not exist: ", e);
+            }
+            int BT_PROPERTY_RESERVED_0F = ioCapsBleField == null ? 0xf : ioCapsBleField.getInt(null);
 
-            Field dynamicAudioBufferField = abstractionLayer.getDeclaredField("BT_PROPERTY_LOCAL_IO_CAPS_BLE");
+            Field dynamicAudioBufferField = abstractionLayer.getDeclaredField("BT_PROPERTY_DYNAMIC_AUDIO_BUFFER");
             dynamicAudioBufferField.setAccessible(true);
             int BT_PROPERTY_DYNAMIC_AUDIO_BUFFER = dynamicAudioBufferField.getInt(null);
 
@@ -397,10 +412,12 @@ public class BluetoothAppModule extends XposedModule {
 
                             onBluetoothReady.invoke(mAdapterProperties.get(adapter));
                             updateUuids.invoke(adapter);
-                            setBluetoothClassFromConfig.invoke(adapter);
+                            if (setBluetoothClassFromConfig != null) {
+                                setBluetoothClassFromConfig.invoke(adapter);
+                            }
                             initProfileServices.invoke(adapter);
                             getAdapterPropertyNative.invoke(adapter, BT_PROPERTY_LOCAL_IO_CAPS);//AbstractionLayer.BT_PROPERTY_LOCAL_IO_CAPS;
-                            getAdapterPropertyNative.invoke(adapter, BT_PROPERTY_LOCAL_IO_CAPS_BLE);//AbstractionLayer.BT_PROPERTY_LOCAL_IO_CAPS_BLE;
+                            getAdapterPropertyNative.invoke(adapter, BT_PROPERTY_RESERVED_0F);//AbstractionLayer.BT_PROPERTY_LOCAL_IO_CAPS_BLE;
                             getAdapterPropertyNative.invoke(adapter, BT_PROPERTY_DYNAMIC_AUDIO_BUFFER);//AbstractionLayer.BT_PROPERTY_DYNAMIC_AUDIO_BUFFER;
 
                             sendMessage.invoke(mAdapterStateMachine.get(adapter), BREDR_STARTED);//AdapterState.BREDR_STARTED
@@ -434,14 +451,41 @@ public class BluetoothAppModule extends XposedModule {
                 }
             });
         } catch (ClassNotFoundException | NoSuchMethodException | NoSuchFieldException |
-                 IllegalAccessException |
-                 NullPointerException /*  | InvocationTargetException*/ e) {
+                 IllegalAccessException | NullPointerException e) {
             log(TAG + " Exception: ", e);
-        }
+        }*/
+
+        /*try {
+            Class<?> btManagerService = param.getClassLoader().loadClass("com.android.server.bluetooth.BluetoothManagerService");
+
+            Method enable = btManagerService.getDeclaredMethod("enable", AttributionSource.class);
+            Method sendEnableMsg = btManagerService.getDeclaredMethod("", boolean.class, int.class, String.class);
+            sendEnableMsg.setAccessible(true);
+
+            final int ENABLE_DISABLE_REASON_APPLICATION_REQUEST = 1;
+
+            hookAfter(enable, (callback, state) -> {
+                if (callback.getThrowable() != null) {
+                    log(TAG + " Exception: ", callback.getThrowable());
+                    callback.setThrowable(null);
+
+                    AttributionSource attributionSource = (AttributionSource) callback.getArgs()[0];
+
+                    try {
+                        sendEnableMsg.invoke(callback.getThisObject(), false, ENABLE_DISABLE_REASON_APPLICATION_REQUEST, attributionSource.getPackageName());
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        log(TAG + " Exception: ", e);
+                    }
+                }
+            });
+        } catch (ClassNotFoundException | NoSuchMethodException |
+                 NullPointerException e) {
+            log(TAG + " Exception: ", e);
+        }*/
 
     }
 
-    void hookServiceStart(ClassLoader cl, String name) {
+    /*void hookServiceStart(ClassLoader cl, String name) {
         try {
             Class<?> cc = cl.loadClass(name);
             Method ccStart = cc.getDeclaredMethod("start");
@@ -452,7 +496,6 @@ public class BluetoothAppModule extends XposedModule {
         } catch (ClassNotFoundException | NoSuchMethodException e) {//| NoSuchFieldException e) {
             log(TAG + "hookServiceStart exception: ", e);
         }
-    }
-
+    }*/
     native void setCodecIds(int[] codecIds);
 }

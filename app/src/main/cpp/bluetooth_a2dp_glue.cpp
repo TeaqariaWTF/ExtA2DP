@@ -45,8 +45,8 @@ static std::vector<btav_a2dp_codec_config_t> stack_to_jni(const std::vector<btav
   return jni;
 }
 
-static void bta2dp_connection_state_callback(const RawAddress& bd_addr, btav_connection_state_t state) {
-  original_a2dp_callbacks->connection_state_cb(bd_addr, state);
+static void bta2dp_connection_state_callback(const RawAddress& bd_addr, btav_connection_state_t state, const btav_error_t& error) {
+  original_a2dp_callbacks->connection_state_cb(bd_addr, state, error);
 }
 
 static void bta2dp_audio_state_callback(const RawAddress& bd_addr, btav_audio_state_t state) {

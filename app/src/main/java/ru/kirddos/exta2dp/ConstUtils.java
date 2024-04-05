@@ -11,16 +11,18 @@ public class ConstUtils {
 
     public static final int SOURCE_QVA_CODEC_TYPE_MAX = SourceCodecType.getQVA();
 
-    private static final int DEFAULT_LHDCV3 = SOURCE_QVA_CODEC_TYPE_MAX+1;
-    private static final int DEFAULT_LHDCV2 = SOURCE_QVA_CODEC_TYPE_MAX+2;
-    private static final int DEFAULT_LHDCV5 = SOURCE_QVA_CODEC_TYPE_MAX+3;
+    private static final int BASE_EXTA2DP_CODEC_OFFSET = 7;
+
+    private static final int DEFAULT_LHDCV3 = SOURCE_QVA_CODEC_TYPE_MAX + BASE_EXTA2DP_CODEC_OFFSET + 1;
+    private static final int DEFAULT_LHDCV2 = SOURCE_QVA_CODEC_TYPE_MAX + BASE_EXTA2DP_CODEC_OFFSET + 2;
+    private static final int DEFAULT_LHDCV5 = SOURCE_QVA_CODEC_TYPE_MAX + BASE_EXTA2DP_CODEC_OFFSET + 3;
 
     public static final int SOURCE_CODEC_TYPE_LHDCV2 = SourceCodecType.getIdByName("LHDCV2", DEFAULT_LHDCV2);
     public static final int SOURCE_CODEC_TYPE_LHDCV3 = SourceCodecType.getIdByName("LHDCV3", DEFAULT_LHDCV3);
     public static final int SOURCE_CODEC_TYPE_LHDCV5 = SourceCodecType.getIdByName("LHDCV5", DEFAULT_LHDCV5);
 
-    public static final int SOURCE_CODEC_TYPE_LC3PLUS_HR = SOURCE_QVA_CODEC_TYPE_MAX + 4;
-    public static final int SOURCE_CODEC_TYPE_FLAC = SOURCE_QVA_CODEC_TYPE_MAX + 5;
+    public static final int SOURCE_CODEC_TYPE_LC3PLUS_HR = SOURCE_QVA_CODEC_TYPE_MAX + BASE_EXTA2DP_CODEC_OFFSET + 4;
+    public static final int SOURCE_CODEC_TYPE_FLAC = SOURCE_QVA_CODEC_TYPE_MAX + BASE_EXTA2DP_CODEC_OFFSET + 5;
 
     public static final int SOURCE_CODEC_TYPE_OPUS = SourceCodecType.getIdByName("OPUS");
 

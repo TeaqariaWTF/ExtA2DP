@@ -1,6 +1,8 @@
 #ifndef EXTA2DP_LSP_NATIVE_H
 #define EXTA2DP_LSP_NATIVE_H
 
+#include <cstdint>
+
 typedef int (*HookFunType)(void *func, void *replace, void **backup);
 
 typedef int (*UnhookFunType)(void *func);

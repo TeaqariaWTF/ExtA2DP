@@ -20,35 +20,43 @@
 
     <include
         android:id="@+id/bluetooth_audio_codec_default"
-        layout="@layout/preference_widget_dialog_radiobutton" />
+        layout="@layout/preference_widget_dialog_radiobutton"/>
 
     <include
         android:id="@+id/bluetooth_audio_codec_sbc"
-        layout="@layout/preference_widget_dialog_radiobutton" />
+        layout="@layout/preference_widget_dialog_radiobutton"/>
 
     <include
         android:id="@+id/bluetooth_audio_codec_aac"
-        layout="@layout/preference_widget_dialog_radiobutton" />
+        layout="@layout/preference_widget_dialog_radiobutton"/>
 
     <include
         android:id="@+id/bluetooth_audio_codec_aptx"
-        layout="@layout/preference_widget_dialog_radiobutton" />
+        layout="@layout/preference_widget_dialog_radiobutton"/>
 
     <include
         android:id="@+id/bluetooth_audio_codec_aptx_hd"
-        layout="@layout/preference_widget_dialog_radiobutton" />
+        layout="@layout/preference_widget_dialog_radiobutton"/>
 
     <include
         android:id="@+id/bluetooth_audio_codec_aptx_adaptive"
-        layout="@layout/preference_widget_dialog_radiobutton" />
+        layout="@layout/preference_widget_dialog_radiobutton"/>
 
     <include
         android:id="@+id/bluetooth_audio_codec_ldac"
-        layout="@layout/preference_widget_dialog_radiobutton" />
+        layout="@layout/preference_widget_dialog_radiobutton"/>
+
+    <include
+        android:id="@+id/bluetooth_audio_codec_lc3"
+        layout="@layout/preference_widget_dialog_radiobutton"/>
+
+    <include
+        android:id="@+id/bluetooth_audio_codec_opus"
+        layout="@layout/preference_widget_dialog_radiobutton"/>
 
     <include
         android:id="@+id/bluetooth_audio_codec_aptx_twsp"
-        layout="@layout/preference_widget_dialog_radiobutton" />
+        layout="@layout/preference_widget_dialog_radiobutton"/>
 
     <include
         android:id="@+id/bluetooth_audio_codec_lhdcv2"

@@ -47,6 +47,12 @@ import ru.kirddos.exta2dp.SourceCodecType;
 import static ru.kirddos.exta2dp.ConstUtils.*;
 
 public class SettingsUIModule extends XposedModule {
+    private static final int CODEC_RADIOBUTTON_INDEX_LHDCV2 = 10;
+    private static final int CODEC_RADIOBUTTON_INDEX_LHDCV3 = 11;
+    private static final int CODEC_RADIOBUTTON_INDEX_LHDCV5 = 12;
+    private static final int CODEC_RADIOBUTTON_INDEX_LC3PLUS_HR = 13;
+    private static final int CODEC_RADIOBUTTON_INDEX_FLAC = 14;
+
     @SuppressLint("NewApi")
     protected static final int[] CODEC_TYPES = {
             SOURCE_CODEC_TYPE_FLAC,
@@ -556,6 +562,8 @@ public class SettingsUIModule extends XposedModule {
                     mRadioButtonIds.add(R.id.bluetooth_audio_codec_aptx_hd);
                     mRadioButtonIds.add(R.id.bluetooth_audio_codec_aptx_adaptive);
                     mRadioButtonIds.add(R.id.bluetooth_audio_codec_ldac);
+                    mRadioButtonIds.add(R.id.bluetooth_audio_codec_lc3);
+                    mRadioButtonIds.add(R.id.bluetooth_audio_codec_opus);
                     mRadioButtonIds.add(R.id.bluetooth_audio_codec_aptx_twsp);
                     mRadioButtonIds.add(R.id.bluetooth_audio_codec_lhdcv2);
                     mRadioButtonIds.add(R.id.bluetooth_audio_codec_lhdcv3);
@@ -613,11 +621,11 @@ public class SettingsUIModule extends XposedModule {
                     log(TAG + " Hooked BluetoothCodecDialogPreferenceController.writeConfigurationValues: type " + index);
                     int type;
                     switch (index) {
-                        case 8 -> type = SOURCE_CODEC_TYPE_LHDCV2;
-                        case 9 -> type = SOURCE_CODEC_TYPE_LHDCV3;
-                        case 10 -> type = SOURCE_CODEC_TYPE_LHDCV5;
-                        case 11 -> type = SOURCE_CODEC_TYPE_LC3PLUS_HR;
-                        case 12 -> type = SOURCE_CODEC_TYPE_FLAC;
+                        case CODEC_RADIOBUTTON_INDEX_LHDCV2 -> type = SOURCE_CODEC_TYPE_LHDCV2;
+                        case CODEC_RADIOBUTTON_INDEX_LHDCV3 -> type = SOURCE_CODEC_TYPE_LHDCV3;
+                        case CODEC_RADIOBUTTON_INDEX_LHDCV5 -> type = SOURCE_CODEC_TYPE_LHDCV5;
+                        case CODEC_RADIOBUTTON_INDEX_LC3PLUS_HR -> type = SOURCE_CODEC_TYPE_LC3PLUS_HR;
+                        case CODEC_RADIOBUTTON_INDEX_FLAC -> type = SOURCE_CODEC_TYPE_FLAC;
                         default -> {
                             return null;
                         }
@@ -642,15 +650,15 @@ public class SettingsUIModule extends XposedModule {
                     int index = 0;
 
                     if (type == SOURCE_CODEC_TYPE_LHDCV2) {
-                        index = 8;
+                        index = CODEC_RADIOBUTTON_INDEX_LHDCV2;
                     } else if (type == SOURCE_CODEC_TYPE_LHDCV3) {
-                        index = 9;
+                        index = CODEC_RADIOBUTTON_INDEX_LHDCV3;
                     } else if (type == SOURCE_CODEC_TYPE_LHDCV5) {
-                        index = 10;
+                        index = CODEC_RADIOBUTTON_INDEX_LHDCV5;
                     } else if (type == SOURCE_CODEC_TYPE_LC3PLUS_HR) {
-                        index = 11;
+                        index = CODEC_RADIOBUTTON_INDEX_LC3PLUS_HR;
                     } else if (type == SOURCE_CODEC_TYPE_FLAC) {
-                        index = 12;
+                        index = CODEC_RADIOBUTTON_INDEX_FLAC;
                     }
 
                     log(TAG + " Hooked BluetoothCodecDialogPreferenceController.convertCfgToBtnIndex: type = " + type + ", index = " + index);

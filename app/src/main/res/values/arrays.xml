@@ -8,6 +8,8 @@
         <item>Qualcomm® aptX™ audio</item>
         <item>Qualcomm® aptX™ HD audio</item>
         <item>LDAC</item>
+        <item>LC3</item>
+        <item>Opus</item>
         <item>Qualcomm® aptX™ Adaptive audio</item>
         <item>Qualcomm® aptX™ TWS+  audio</item>
         <item>Savitech® LHDC V2™</item>
@@ -34,6 +36,8 @@
         <item>9</item>
         <item>10</item>
         <item>11</item>
+        <item>12</item>
+        <item>13</item>
     </string-array>
 
     <!-- Summaries for Bluetooth Audio Codec selection preference. [CHAR LIMIT=50]-->
@@ -44,8 +48,10 @@
         <item>Qualcomm® aptX™ audio</item>
         <item>Qualcomm® aptX™ HD audio</item>
         <item>LDAC</item>
-        <item>Qualcomm® aptX™ Adaptive  audio</item>
-        <item>Qualcomm® aptX™ TWS+ audio</item>
+        <item>LC3</item>
+        <item>Opus</item>
+        <item>Qualcomm® aptX™ Adaptive audio</item>
+        <item>Qualcomm® aptX™ TWS+audio</item>
         <item>Savitech® LHDC V2™</item>
         <item>Savitech® LHDC V3/V4™</item>
         <item>Savitech® LHDC-V™</item>

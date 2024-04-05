@@ -5,7 +5,8 @@
 # Sets the minimum version of CMake required to build the native library.
 
 cmake_minimum_required(VERSION 3.22.1)
-
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Declares and names the project.
 
 project("exta2dp")
@@ -22,7 +23,7 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             exta2dp.cpp bluetooth_callbacks_glue.cpp bluetooth_a2dp_glue.cpp)
+             exta2dp.cpp bluetooth_a2dp_glue.cpp)
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
 # default, you only need to specify the name of the public NDK library
